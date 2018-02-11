@@ -9,10 +9,19 @@ import com.dbteku.fileserver.models.ProtectedUser;
 
 public class RamUserDirectory implements IDirectory<String, ProtectedUser>{
 
+	private static RamUserDirectory instance;
 	private Map<String, ProtectedUser> users;
 	
-	public RamUserDirectory() {
+	private RamUserDirectory() {
 		users = new HashMap<>();
+	}
+	
+	public static RamUserDirectory getInstance() {
+		if(instance == null) {
+			instance = new RamUserDirectory();
+		}
+		
+		return instance;
 	}
 
 	@Override

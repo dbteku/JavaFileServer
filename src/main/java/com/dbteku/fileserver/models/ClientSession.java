@@ -1,6 +1,8 @@
 package com.dbteku.fileserver.models;
 
-public class ClientSession {
+import com.dbteku.fileserver.interfaces.INullable;
+
+public class ClientSession implements INullable{
 
 	private String id;
 	private long expireTime;

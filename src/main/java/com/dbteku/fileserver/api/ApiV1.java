@@ -13,7 +13,7 @@ public class ApiV1 implements IService{
 	@Override
 	public void start() {
 		
-		post("/v1/users", (req, res)->{
+		post("/v1/auth/login", (req, res)->{
 			setJsonHeaders(res);
 			return null;
 		});

@@ -19,7 +19,7 @@ public class Sha256Encryption {
 		}
 	}
 	
-	public String hash(String password) {
+	public String encrypt(String password) {
 		String hashedPassword = "";
 		if(digest != null) {
 			byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));	
