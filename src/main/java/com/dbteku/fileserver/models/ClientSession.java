@@ -5,7 +5,7 @@ import com.dbteku.fileserver.interfaces.INullable;
 public class ClientSession implements INullable{
 
 	private String id;
-	private String username;
+	private transient String username;
 	private transient long expireTime;
 	
 	public ClientSession(String id, String username, long expireTime) {

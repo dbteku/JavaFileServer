@@ -17,6 +17,8 @@ public class HttpService implements IService{
 	@Override
 	public void start() {
 		port(this.port);
+//		File file = new File("");
+//		staticFiles.externalLocation(file.getAbsolutePath() + "/public");
 		ApiV1 v1 = new ApiV1();
 		v1.start();
 		isRunning = true;

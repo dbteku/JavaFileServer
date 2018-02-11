@@ -4,6 +4,10 @@ import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.put;
+import static spark.Spark.options;
+import static spark.Spark.before;
+
+import java.util.UUID;
 
 import com.dbteku.fileserver.directories.ClientDirectory;
 import com.dbteku.fileserver.directories.ClientSessionDirectory;
@@ -16,6 +20,8 @@ import com.dbteku.fileserver.responses.CannotDeleteYourselfResponse;
 import com.dbteku.fileserver.responses.DoesntExistResponse;
 import com.dbteku.fileserver.responses.HttpResponse;
 import com.dbteku.fileserver.responses.InvalidJsonResponse;
+import com.dbteku.fileserver.responses.InvalidUsernameOrPassword;
+import com.dbteku.fileserver.responses.LoggedInResponse;
 import com.dbteku.fileserver.responses.OkResponse;
 import com.dbteku.fileserver.responses.UnAuthorizedResponse;
 import com.dbteku.fileserver.tools.SaltGenerator;
@@ -30,19 +36,43 @@ public class ApiV1 implements IService{
 	private static final String CONTENT_TYPE = "Content-Type";
 	private static final String APPLICATION_JSON = "application/json";
 	private static final String AUTH_HEADER = "authenciation";
+	private static final long ONE_SECOND_IN_MILLIS = 1000;
 	private ClientSessionDirectory sessions;
 	private ClientDirectory clients;
 	private Gson gson;
-	
+
 	public ApiV1() {
 		this.sessions = ClientSessionDirectory.getInstance();
 		this.clients = ClientDirectory.getInstance();
 		this.gson = new Gson();
 	}
-	
+
 	@Override
 	public void start() {
-		
+
+		options("/*", (request, response) -> {
+
+			String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+			if (accessControlRequestHeaders != null) {
+				response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+			}
+
+			String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+			if (accessControlRequestMethod != null) {
+				response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+			}
+
+			return "OK";
+		});
+
+		before((request, response) -> {
+			response.header("Access-Control-Allow-Origin", "*");
+			response.header("Access-Control-Request-Method", "GET, POST, DELETE, PUT, PATCH, OPTIONS");
+			response.header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin");
+			// Note: this may or may not be necessary in your particular application
+			response.type("application/json");
+		});
+
 		post("/v1/auth/user", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
@@ -79,7 +109,7 @@ public class ApiV1 implements IService{
 			}
 			return gson.toJson(response);
 		});
-		
+
 		delete("/v1/auth/user/:user", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
@@ -111,38 +141,107 @@ public class ApiV1 implements IService{
 			}
 			return gson.toJson(response);
 		});
-		
+
 		post("/v1/auth/login", (req, res)->{
-			return null;
-		});
-		
-		post("/v1/auth/logout", (req, res)->{
+			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
-			return null;
+
+			NewUser user = gson.fromJson(req.body(), NewUser.class);
+			if(user == null) {
+				response = new InvalidJsonResponse();
+				res.status(400);
+			}else {
+				ProtectedUser protectedUser = clients.get(user.getUsername());
+				if(protectedUser.isNull()) {
+					response = new InvalidUsernameOrPassword();
+				}else {
+					String potentialSaltedPassword = user.getPassword() + protectedUser.getSaltCode();
+					Sha256Encryption encryption = new Sha256Encryption();
+					String potentialPassword = encryption.encrypt(potentialSaltedPassword);
+					if(potentialPassword.equals(protectedUser.getHashedPassword())) {
+						String sessionId = UUID.randomUUID().toString();
+						while(sessions.has(sessionId)) {
+							sessionId = UUID.randomUUID().toString();
+						}
+						long now = System.currentTimeMillis();
+						long expire = now + (ONE_SECOND_IN_MILLIS * 60 * 30);
+						ClientSession session = new ClientSession(sessionId, protectedUser.getUsername(), expire);
+						sessions.put(session.getId(), session);
+						response = new LoggedInResponse(session);
+					}else {
+						response = new InvalidUsernameOrPassword();
+					}
+				}
+			}
+
+			return gson.toJson(response);
 		});
-		
+
+		post("/v1/auth/logout", (req, res)->{
+			HttpResponse response = new OkResponse();
+			setJsonHeaders(res);
+
+			String header = req.headers(AUTH_HEADER);
+			JsonObject obj = gson.fromJson(header, JsonObject.class);
+			if(obj.has("id")) {
+				String id = obj.get("id").getAsString();
+				if(isLoggedIn(id)) {
+					sessions.delete(id);
+				}else {
+					response = new UnAuthorizedResponse();
+					res.status(401);
+				}
+			}else {
+				response = new UnAuthorizedResponse();
+				res.status(401);
+			}
+			return gson.toJson(response);
+		});
+
 		get("/v1/files", (req, res)->{
 			return null;
 		});
-		
+
 		get("/v1/files/:file", (req, res)->{
 			return null;
 		});
-		
+
 		put("/v1/files/:file", (req, res)->{
 			return null;
 		});
-		
+
 		delete("/v1/files/:file", (req, res)->{
 			return null;
 		});
-		
+
 	}
-	
+
+	private void renewSession(String id) {
+		ClientSession session = sessions.get(id);
+		if(session.isNull()) {
+		}else {
+			long now = System.currentTimeMillis();
+			long expire = now + (ONE_SECOND_IN_MILLIS * 60 * 30);
+			session.setExpireTime(expire);
+		}
+	}
+
 	private boolean isLoggedIn(String id) {
-		return sessions.has(id);
+		boolean loggedIn = false;
+
+		if(sessions.has(id)) {
+			ClientSession session = sessions.get(id);
+			if(session.getExpireTime() > System.currentTimeMillis()) {
+				sessions.delete(id);
+			}else {
+				renewSession(id);
+				loggedIn = true;
+			}
+		}
+
+		return loggedIn;
 	}
-	
+
 	private void setJsonHeaders(Response res) {
 		res.header(CONTENT_TYPE, APPLICATION_JSON);
 	}
