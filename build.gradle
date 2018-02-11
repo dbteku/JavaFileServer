@@ -1,0 +1,13 @@
+apply plugin: 'java'
+repositories {
+    jcenter()
+   	maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+	compile 'org.slf4j:slf4j-simple:1.7.6'
+	compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
+    compile 'com.sparkjava:spark-core:2.7.1'
+    compile 'com.google.code.gson:gson:2.8.2'
+    compile 'com.github.dbteku:JavaEvents:0.2.5'
+}
