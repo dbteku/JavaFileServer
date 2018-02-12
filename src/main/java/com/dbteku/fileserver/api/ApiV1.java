@@ -1,11 +1,11 @@
 package com.dbteku.fileserver.api;
 
+import static spark.Spark.before;
 import static spark.Spark.delete;
 import static spark.Spark.get;
+import static spark.Spark.options;
 import static spark.Spark.post;
 import static spark.Spark.put;
-import static spark.Spark.options;
-import static spark.Spark.before;
 
 import java.util.UUID;
 
@@ -27,7 +27,6 @@ import com.dbteku.fileserver.responses.UnAuthorizedResponse;
 import com.dbteku.fileserver.tools.SaltGenerator;
 import com.dbteku.fileserver.tools.Sha256Encryption;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import spark.Response;
 
@@ -35,7 +34,7 @@ public class ApiV1 implements IService{
 
 	private static final String CONTENT_TYPE = "Content-Type";
 	private static final String APPLICATION_JSON = "application/json";
-	private static final String AUTH_HEADER = "authenciation";
+	private static final String AUTH_HEADER = "authentication";
 	private static final long ONE_SECOND_IN_MILLIS = 1000;
 	private ClientSessionDirectory sessions;
 	private ClientDirectory clients;
@@ -73,35 +72,42 @@ public class ApiV1 implements IService{
 			response.type("application/json");
 		});
 
+		get("/v1/auth/loggedIn", (req, res)->{
+			HttpResponse response = new OkResponse();
+			setJsonHeaders(res);
+			String id = req.headers(AUTH_HEADER);
+			System.out.println(sessions.has(id));
+			if(isLoggedIn(id)) {
+				response = new LoggedInResponse(sessions.get(id));
+			}else {
+				response = new UnAuthorizedResponse();
+				res.status(401);
+			}
+			return gson.toJson(response);
+		});
+
 		post("/v1/auth/user", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
-			String header = req.headers(AUTH_HEADER);
-			JsonObject obj = gson.fromJson(header, JsonObject.class);
-			if(obj.has("id")) {
-				String id = obj.get("id").getAsString();
-				if(isLoggedIn(id)) {
-					NewUser user = gson.fromJson(req.body(), NewUser.class);
-					if(user == null) {
-						response = new InvalidJsonResponse();
+			String id = req.headers(AUTH_HEADER);
+			if(isLoggedIn(id)) {
+				NewUser user = gson.fromJson(req.body(), NewUser.class);
+				if(user == null) {
+					response = new InvalidJsonResponse();
+					res.status(400);
+				}else {
+					SaltGenerator generator = new SaltGenerator();
+					String salt = generator.generate();
+					String saltedPassword = user.getPassword() + salt;
+					Sha256Encryption encryption = new Sha256Encryption();
+					String encrypedPassword = encryption.encrypt(saltedPassword);
+					ProtectedUser protectedUser = new ProtectedUser(user.getUsername(), encrypedPassword, salt);
+					if(clients.has(protectedUser.getUsername())) {
+						response = new AlreadyExistsResponse();
 						res.status(400);
 					}else {
-						SaltGenerator generator = new SaltGenerator();
-						String salt = generator.generate();
-						String saltedPassword = user.getPassword() + salt;
-						Sha256Encryption encryption = new Sha256Encryption();
-						String encrypedPassword = encryption.encrypt(saltedPassword);
-						ProtectedUser protectedUser = new ProtectedUser(user.getUsername(), encrypedPassword, salt);
-						if(clients.has(protectedUser.getUsername())) {
-							response = new AlreadyExistsResponse();
-							res.status(400);
-						}else {
-							clients.put(user.getUsername(), protectedUser);	
-						}
+						clients.put(user.getUsername(), protectedUser);	
 					}
-				}else {
-					response = new UnAuthorizedResponse();
-					res.status(401);
 				}
 			}else {
 				response = new UnAuthorizedResponse();
@@ -113,27 +119,20 @@ public class ApiV1 implements IService{
 		delete("/v1/auth/user/:user", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
-			String header = req.headers(AUTH_HEADER);
-			JsonObject obj = gson.fromJson(header, JsonObject.class);
-			if(obj.has("id")) {
-				String id = obj.get("id").getAsString();
-				if(isLoggedIn(id)) {
-					String username = req.params(":user");
-					if(clients.has(username)) {
-						ClientSession session = sessions.get(id);
-						if(session.getUsername().equals(username)) {
-							response = new CannotDeleteYourselfResponse();
-							res.status(400);
-						}else {
-							clients.delete(username);	
-						}
-					}else {
-						response = new DoesntExistResponse();
+			String id = req.headers(AUTH_HEADER);
+			if(isLoggedIn(id)) {
+				String username = req.params(":user");
+				if(clients.has(username)) {
+					ClientSession session = sessions.get(id);
+					if(session.getUsername().equals(username)) {
+						response = new CannotDeleteYourselfResponse();
 						res.status(400);
+					}else {
+						clients.delete(username);	
 					}
 				}else {
-					response = new UnAuthorizedResponse();
-					res.status(401);
+					response = new DoesntExistResponse();
+					res.status(400);
 				}
 			}else {
 				response = new UnAuthorizedResponse();
@@ -145,7 +144,6 @@ public class ApiV1 implements IService{
 		post("/v1/auth/login", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
-
 			NewUser user = gson.fromJson(req.body(), NewUser.class);
 			if(user == null) {
 				response = new InvalidJsonResponse();
@@ -180,17 +178,9 @@ public class ApiV1 implements IService{
 		post("/v1/auth/logout", (req, res)->{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
-
-			String header = req.headers(AUTH_HEADER);
-			JsonObject obj = gson.fromJson(header, JsonObject.class);
-			if(obj.has("id")) {
-				String id = obj.get("id").getAsString();
-				if(isLoggedIn(id)) {
-					sessions.delete(id);
-				}else {
-					response = new UnAuthorizedResponse();
-					res.status(401);
-				}
+			String id = req.headers(AUTH_HEADER);
+			if(isLoggedIn(id)) {
+				sessions.delete(id);
 			}else {
 				response = new UnAuthorizedResponse();
 				res.status(401);
@@ -231,11 +221,12 @@ public class ApiV1 implements IService{
 
 		if(sessions.has(id)) {
 			ClientSession session = sessions.get(id);
-			if(session.getExpireTime() > System.currentTimeMillis()) {
-				sessions.delete(id);
-			}else {
+			long now = System.currentTimeMillis();
+			if(session.getExpireTime() - now > 0) {
 				renewSession(id);
 				loggedIn = true;
+			}else {
+				sessions.delete(id);
 			}
 		}
 
