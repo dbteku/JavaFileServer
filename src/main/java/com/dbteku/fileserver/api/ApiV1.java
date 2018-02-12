@@ -76,7 +76,6 @@ public class ApiV1 implements IService{
 			HttpResponse response = new OkResponse();
 			setJsonHeaders(res);
 			String id = req.headers(AUTH_HEADER);
-			System.out.println(sessions.has(id));
 			if(isLoggedIn(id)) {
 				response = new LoggedInResponse(sessions.get(id));
 			}else {
