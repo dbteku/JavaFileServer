@@ -7,6 +7,8 @@ import spark.Request;
 import spark.Response;
 
 public interface IFileControllerV1 extends IApiController{
+	
+	HttpResponse getFiles(Request req, Response res);
 	HttpResponse getFile(Request req, Response res);
 	HttpResponse deleteFile(Request req, Response res);
 	HttpResponse uploadFile(Request req, Response res);

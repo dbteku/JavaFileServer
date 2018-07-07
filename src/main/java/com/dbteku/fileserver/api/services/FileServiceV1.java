@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.dbteku.fileserver.responses.HttpResponse;
 import com.dbteku.fileserver.responses.InternalErrorResponse;
+import com.dbteku.fileserver.responses.JsonResponse;
 import com.dbteku.fileserver.responses.NotFoundResponse;
 import com.dbteku.fileserver.responses.OkResponse;
 import com.dbteku.fileserver.responses.RawDataResponse;
@@ -38,8 +39,16 @@ public class FileServiceV1 implements IFileServiceV1{
 		return instance;
 	}
 	
+
 	@Override
-	public HttpResponse getFile(String filePath, Response res) {
+	public HttpResponse getFiles(String sessionId) {
+		File file = new File("files/");
+		Object obj = file.list();
+		return new JsonResponse(obj);
+	}
+	
+	@Override
+	public HttpResponse getFile(String sessionId, String filePath, Response res) {
 		HttpResponse response = new NotFoundResponse();
 		File potential = new File("files/" + filePath);
 		if(potential.exists()) {
@@ -74,20 +83,23 @@ public class FileServiceV1 implements IFileServiceV1{
 	            e.printStackTrace();
 	        }
 	       response = new RawDataResponse(raw);
-		}else {
-			res.status(404);
 		}
         return response;
 	}
 
 	@Override
-	public HttpResponse deleteFile(String filePath) {
-		// TODO Auto-generated method stub
-		return null;
+	public HttpResponse deleteFile(String sessionId, String filePath) {
+		HttpResponse response = new NotFoundResponse();
+		File file = new File("files/" + filePath);
+		if(file.exists()) {
+			file.delete();
+			response = new OkResponse();
+		}
+		return response;
 	}
 
 	@Override
-	public HttpResponse uploadFile(Request req) {
+	public HttpResponse uploadFile(String sessionId, Request req) {
 		HttpResponse response = new OkResponse();
 		BigInteger integer = new BigInteger("100000000000");
 		req.attribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("temp", integer.longValue(), integer.longValue(), DATA_PER_SECOND));

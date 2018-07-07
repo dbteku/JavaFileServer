@@ -7,8 +7,9 @@ import spark.Response;
 
 public interface IFileServiceV1 {
 
-	HttpResponse getFile(String filePath, Response res); 
-	HttpResponse deleteFile(String filePath);
-	HttpResponse uploadFile(Request req);
+	HttpResponse getFiles(String sessionId);
+	HttpResponse getFile(String sessionId, String fileName, Response res); 
+	HttpResponse deleteFile(String sessionId, String fileName);
+	HttpResponse uploadFile(String sessionId, Request req);
 	
 }

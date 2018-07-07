@@ -6,6 +6,7 @@ import static spark.Spark.post;
 import com.dbteku.fileserver.api.services.IAuthServiceV1;
 import com.dbteku.fileserver.models.NewUser;
 import com.dbteku.fileserver.responses.HttpResponse;
+import com.dbteku.fileserver.tools.Authorization;
 import com.google.gson.Gson;
 
 import spark.Request;
@@ -13,7 +14,6 @@ import spark.Response;
 
 public class AuthControllerV1 implements IAuthControllerV1{
 
-	private static final String AUTH_HEADER = "authentication";
 	private IAuthServiceV1 service;
 	private Gson gson;
 
@@ -140,13 +140,13 @@ public class AuthControllerV1 implements IAuthControllerV1{
 	}
 	@Override
 	public HttpResponse logout(Request req, Response res) {
-		HttpResponse response = service.logout(req.headers(AUTH_HEADER));
+		HttpResponse response = service.logout(req.headers(Authorization.AUTH_HEADER));
 		res.status(response.getStatusCode());
 		return response;
 	}
 	@Override
 	public HttpResponse isLoggedIn(Request req, Response res) {
-		HttpResponse response = service.isLoggedIn(req.headers(AUTH_HEADER));
+		HttpResponse response = service.isLoggedIn(req.headers(Authorization.AUTH_HEADER));
 		res.status(response.getStatusCode());
 		return response;
 	}

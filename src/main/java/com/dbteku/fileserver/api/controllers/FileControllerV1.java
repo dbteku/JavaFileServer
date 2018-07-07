@@ -8,6 +8,8 @@ import java.io.File;
 
 import com.dbteku.fileserver.api.services.IFileServiceV1;
 import com.dbteku.fileserver.responses.HttpResponse;
+import com.dbteku.fileserver.responses.UnAuthorizedResponse;
+import com.dbteku.fileserver.tools.Authorization;
 import com.google.gson.Gson;
 
 import spark.Request;
@@ -32,7 +34,7 @@ public class FileControllerV1 implements IFileControllerV1{
 		}
 		
 		get("/v1/files", (req, res)->{
-			return null;
+			return gson.toJson(getFiles(req, res));
 		});
 
 		get("/v1/files/:file", (req, res)->{
@@ -52,24 +54,43 @@ public class FileControllerV1 implements IFileControllerV1{
 			return gson.toJson(deleteFile(req, res));
 		});
 	}
+	
+	@Override
+	public HttpResponse getFiles(Request req, Response res) {
+		HttpResponse response = new UnAuthorizedResponse();
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+			response = service.getFiles(req.headers(Authorization.AUTH_HEADER));	
+		}
+		res.status(response.getStatusCode());
+		return response;
+	}
 
 	@Override
 	public HttpResponse getFile(Request req, Response res) {
-		HttpResponse response = service.getFile(req.params(":file"), res);
+		HttpResponse response = new UnAuthorizedResponse();
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+			response = service.getFile(req.headers(Authorization.AUTH_HEADER), req.params(":file"), res);	
+		}
 		res.status(response.getStatusCode());
 		return response;
 	}
 
 	@Override
 	public HttpResponse deleteFile(Request req, Response res) {
-		HttpResponse response = service.deleteFile(req.params(":file"));
+		HttpResponse response = new UnAuthorizedResponse();
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+			response = service.deleteFile(req.headers(Authorization.AUTH_HEADER), req.params(":file"));
+		}
 		res.status(response.getStatusCode());
 		return response;
 	}
 
 	@Override
 	public HttpResponse uploadFile(Request req, Response res) {
-		HttpResponse response = service.uploadFile(req);
+		HttpResponse response = new UnAuthorizedResponse();
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+			response = service.uploadFile(req.headers(Authorization.AUTH_HEADER), req);
+		}
 		res.status(response.getStatusCode());
 		return response;
 	}
