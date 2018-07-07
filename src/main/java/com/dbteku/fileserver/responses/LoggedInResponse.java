@@ -7,7 +7,7 @@ public class LoggedInResponse extends HttpResponse{
 	private ClientSession session;
 	
 	public LoggedInResponse(ClientSession session) {
-		super(true, false, "Logged In!");
+		super(true, false, "Logged In!", 200);
 		this.session = session;
 	}
 	

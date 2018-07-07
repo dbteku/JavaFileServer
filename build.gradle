@@ -9,5 +9,5 @@ dependencies {
 	compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
     compile 'com.sparkjava:spark-core:2.7.1'
     compile 'com.google.code.gson:gson:2.8.2'
-    compile 'com.github.dbteku:JavaEvents:0.2.5'
+    compile 'com.github.dbteku:JavaEvents:0.2.7'
 }
