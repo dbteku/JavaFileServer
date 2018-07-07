@@ -134,15 +134,21 @@ public class AuthControllerV1 implements IAuthControllerV1{
 	}
 	@Override
 	public HttpResponse login(Request req, Response res) {
-		return service.login(gson.fromJson(req.body(), NewUser.class));
+		HttpResponse response = service.login(gson.fromJson(req.body(), NewUser.class));
+		res.status(response.getStatusCode());
+		return response;
 	}
 	@Override
 	public HttpResponse logout(Request req, Response res) {
-		return service.logout(req.headers(AUTH_HEADER));
+		HttpResponse response = service.logout(req.headers(AUTH_HEADER));
+		res.status(response.getStatusCode());
+		return response;
 	}
 	@Override
 	public HttpResponse isLoggedIn(Request req, Response res) {
-		return service.isLoggedIn(req.headers(AUTH_HEADER));
+		HttpResponse response = service.isLoggedIn(req.headers(AUTH_HEADER));
+		res.status(response.getStatusCode());
+		return response;
 	}
 
 

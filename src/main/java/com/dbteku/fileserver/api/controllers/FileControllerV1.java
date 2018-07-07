@@ -55,17 +55,23 @@ public class FileControllerV1 implements IFileControllerV1{
 
 	@Override
 	public HttpResponse getFile(Request req, Response res) {
-		return service.getFile(req.params(":file"), res);
+		HttpResponse response = service.getFile(req.params(":file"), res);
+		res.status(response.getStatusCode());
+		return response;
 	}
 
 	@Override
 	public HttpResponse deleteFile(Request req, Response res) {
-		return service.deleteFile(req.params(":file"));
+		HttpResponse response = service.deleteFile(req.params(":file"));
+		res.status(response.getStatusCode());
+		return response;
 	}
 
 	@Override
 	public HttpResponse uploadFile(Request req, Response res) {
-		return service.uploadFile(req);
+		HttpResponse response = service.uploadFile(req);
+		res.status(response.getStatusCode());
+		return response;
 	}
 
 }
