@@ -60,9 +60,7 @@ public class FileControllerV1 implements IFileControllerV1{
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
 			String activeDirectory = "/";
-			if(req.queryMap().hasKey("activeDirectory")) {
-				activeDirectory = req.queryMap().get("activeDirectory").value();
-			}
+			activeDirectory = req.queryMap().get("activeDirectory").value();
 			response = service.listFiles(req.headers(Authorization.AUTH_HEADER), activeDirectory, 0, 0);	
 		}
 		res.status(response.getStatusCode());
@@ -73,10 +71,8 @@ public class FileControllerV1 implements IFileControllerV1{
 	public HttpResponse getFile(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			if(req.queryMap().hasKey("location")) {
-				String location = req.queryMap().get("location").value();
-				response = service.getFile(req.headers(Authorization.AUTH_HEADER), location, res);
-			}
+			String location = req.queryMap().get("location").value();
+			response = service.getFile(req.headers(Authorization.AUTH_HEADER), location, res);
 		}
 		res.status(response.getStatusCode());
 		return response;
@@ -86,10 +82,8 @@ public class FileControllerV1 implements IFileControllerV1{
 	public HttpResponse deleteFile(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			if(req.queryMap().hasKey("location")) {
-				String location = req.queryMap().get("location").value();
-				response = service.deleteFile(req.headers(Authorization.AUTH_HEADER), location);
-			}
+			String location = req.queryMap().get("location").value();
+			response = service.deleteFile(req.headers(Authorization.AUTH_HEADER), location);
 		}
 		res.status(response.getStatusCode());
 		return response;
