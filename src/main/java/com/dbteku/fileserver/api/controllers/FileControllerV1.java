@@ -27,12 +27,12 @@ public class FileControllerV1 implements IFileControllerV1{
 
 	@Override
 	public void start() {
-		
+
 		File file = new File("files");
 		if(!file.isDirectory()) {
 			file.mkdir();
 		}
-		
+
 		get("/v1/files", (req, res)->{
 			return gson.toJson(listFiles(req, res));
 		});
@@ -50,21 +50,21 @@ public class FileControllerV1 implements IFileControllerV1{
 			return gson.toJson(uploadFile(req, res));
 		});
 
-		delete("/v1/files/:file", (req, res)->{
+		delete("/v1/files", (req, res)->{
 			return gson.toJson(deleteFile(req, res));
 		});
 	}
-	
+
 	@Override
 	public HttpResponse listFiles(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
-//		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
 			String activeDirectory = "/";
 			if(req.queryMap().hasKey("activeDirectory")) {
 				activeDirectory = req.queryMap().get("activeDirectory").value();
 			}
 			response = service.listFiles(req.headers(Authorization.AUTH_HEADER), activeDirectory, 0, 0);	
-//		}
+		}
 		res.status(response.getStatusCode());
 		return response;
 	}
@@ -72,12 +72,12 @@ public class FileControllerV1 implements IFileControllerV1{
 	@Override
 	public HttpResponse getFile(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
-//		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
 			if(req.queryMap().hasKey("location")) {
 				String location = req.queryMap().get("location").value();
 				response = service.getFile(req.headers(Authorization.AUTH_HEADER), location, res);
 			}
-//		}
+		}
 		res.status(response.getStatusCode());
 		return response;
 	}
@@ -86,7 +86,10 @@ public class FileControllerV1 implements IFileControllerV1{
 	public HttpResponse deleteFile(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			response = service.deleteFile(req.headers(Authorization.AUTH_HEADER), req.params(":file"));
+			if(req.queryMap().hasKey("location")) {
+				String location = req.queryMap().get("location").value();
+				response = service.deleteFile(req.headers(Authorization.AUTH_HEADER), location);
+			}
 		}
 		res.status(response.getStatusCode());
 		return response;

@@ -64,8 +64,11 @@ public class FileServiceV1 implements IFileServiceV1{
 	@Override
 	public HttpResponse getFile(String sessionId, String filePath, Response res) {
 		HttpResponse response = new NotFoundResponse();
+		if(filePath == null) {
+			filePath = "";
+		}
 		File potential = new File("files/" + filePath);
-		if(potential.exists()) {
+		if(potential.exists() && !potential.isDirectory()) {
 			FileInputStream inputstream = null;
 			try {
 				inputstream = new FileInputStream("files/" + filePath);
@@ -104,8 +107,11 @@ public class FileServiceV1 implements IFileServiceV1{
 	@Override
 	public HttpResponse deleteFile(String sessionId, String filePath) {
 		HttpResponse response = new NotFoundResponse();
+		if(filePath == null) {
+			filePath = "";
+		}
 		File file = new File("files/" + filePath);
-		if(file.exists()) {
+		if(file.exists() && !file.isDirectory()) {
 			file.delete();
 			response = new OkResponse();
 		}
