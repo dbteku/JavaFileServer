@@ -51,7 +51,7 @@ public class AuthServiceV1 implements IAuthServiceV1{
 				Sha256Encryption encryption = new Sha256Encryption();
 				String potentialPassword = encryption.encrypt(potentialSaltedPassword);
 				if(potentialPassword.equals(protectedUser.getHashedPassword())) {
-					String sessionId = UUID.randomUUID().toString();
+					String sessionId = newUser.getUsername() + "-" + UUID.randomUUID().toString();
 					while(sessions.has(sessionId)) {
 						sessionId = UUID.randomUUID().toString();
 					}

@@ -59,7 +59,7 @@ public class FileControllerV1 implements IFileControllerV1{
 	public HttpResponse getFiles(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			response = service.getFiles(req.headers(Authorization.AUTH_HEADER));	
+			response = service.getFiles(req.headers(Authorization.AUTH_HEADER), "", 0, 0);	
 		}
 		res.status(response.getStatusCode());
 		return response;

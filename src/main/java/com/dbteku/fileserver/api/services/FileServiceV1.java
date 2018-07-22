@@ -41,7 +41,7 @@ public class FileServiceV1 implements IFileServiceV1{
 	
 
 	@Override
-	public HttpResponse getFiles(String sessionId) {
+	public HttpResponse getFiles(String sessionId, String rootPath, int lastIndex, int numberOfRecords){
 		File file = new File("files/");
 		Object obj = file.list();
 		return new JsonResponse(obj);
