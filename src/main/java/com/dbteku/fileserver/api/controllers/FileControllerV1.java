@@ -34,7 +34,7 @@ public class FileControllerV1 implements IFileControllerV1{
 		}
 		
 		get("/v1/files", (req, res)->{
-			return gson.toJson(getFiles(req, res));
+			return gson.toJson(listFiles(req, res));
 		});
 
 		get("/v1/files/:file", (req, res)->{
@@ -56,10 +56,14 @@ public class FileControllerV1 implements IFileControllerV1{
 	}
 	
 	@Override
-	public HttpResponse getFiles(Request req, Response res) {
+	public HttpResponse listFiles(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
 		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			response = service.getFiles(req.headers(Authorization.AUTH_HEADER), "", 0, 0);	
+			String activeDirectory = "/";
+			if(req.queryMap().hasKey("activeDirectory")) {
+				activeDirectory = req.queryMap().get("activeDirectory").value();
+			}
+			response = service.listFiles(req.headers(Authorization.AUTH_HEADER), activeDirectory, 0, 0);	
 		}
 		res.status(response.getStatusCode());
 		return response;

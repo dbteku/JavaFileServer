@@ -13,9 +13,10 @@ import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.dbteku.fileserver.models.FileData;
+import com.dbteku.fileserver.responses.FileListResponse;
 import com.dbteku.fileserver.responses.HttpResponse;
 import com.dbteku.fileserver.responses.InternalErrorResponse;
-import com.dbteku.fileserver.responses.JsonResponse;
 import com.dbteku.fileserver.responses.NotFoundResponse;
 import com.dbteku.fileserver.responses.OkResponse;
 import com.dbteku.fileserver.responses.RawDataResponse;
@@ -41,10 +42,23 @@ public class FileServiceV1 implements IFileServiceV1{
 	
 
 	@Override
-	public HttpResponse getFiles(String sessionId, String rootPath, int lastIndex, int numberOfRecords){
-		File file = new File("files/");
-		Object obj = file.list();
-		return new JsonResponse(obj);
+	public HttpResponse listFiles(String sessionId, String rootPath, int lastIndex, int numberOfRecords){
+		String path = "files/";
+		File file = new File(path);
+		if(rootPath != null && !rootPath.equals("/")) {
+			path += rootPath;
+			file = new File(path);
+		}
+		File[] files = file.listFiles();
+		if(files == null) {
+			files = new File[0];
+		}
+		FileData[] data = new FileData[files.length];
+		for (int i = 0; i < files.length; i++) {
+			data[i] = new FileData(files[i].getName(), files[i].isDirectory());
+		}
+		
+		return new FileListResponse(path.replace("files/", "/"), data);
 	}
 	
 	@Override
