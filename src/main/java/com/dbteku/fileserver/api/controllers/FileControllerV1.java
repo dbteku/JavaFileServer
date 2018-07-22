@@ -37,7 +37,7 @@ public class FileControllerV1 implements IFileControllerV1{
 			return gson.toJson(listFiles(req, res));
 		});
 
-		get("/v1/files/:file", (req, res)->{
+		get("/v1/files/download", (req, res)->{
 			HttpResponse response = getFile(req, res);
 			Object obj = response;
 			if(response.getRawData() == null) {
@@ -58,13 +58,13 @@ public class FileControllerV1 implements IFileControllerV1{
 	@Override
 	public HttpResponse listFiles(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
-		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+//		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
 			String activeDirectory = "/";
 			if(req.queryMap().hasKey("activeDirectory")) {
 				activeDirectory = req.queryMap().get("activeDirectory").value();
 			}
 			response = service.listFiles(req.headers(Authorization.AUTH_HEADER), activeDirectory, 0, 0);	
-		}
+//		}
 		res.status(response.getStatusCode());
 		return response;
 	}
@@ -72,9 +72,12 @@ public class FileControllerV1 implements IFileControllerV1{
 	@Override
 	public HttpResponse getFile(Request req, Response res) {
 		HttpResponse response = new UnAuthorizedResponse();
-		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
-			response = service.getFile(req.headers(Authorization.AUTH_HEADER), req.params(":file"), res);	
-		}
+//		if(Authorization.isLoggedIn(req.headers(Authorization.AUTH_HEADER))) {
+			if(req.queryMap().hasKey("location")) {
+				String location = req.queryMap().get("location").value();
+				response = service.getFile(req.headers(Authorization.AUTH_HEADER), location, res);
+			}
+//		}
 		res.status(response.getStatusCode());
 		return response;
 	}

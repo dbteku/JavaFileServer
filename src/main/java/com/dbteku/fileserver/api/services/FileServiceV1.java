@@ -58,7 +58,7 @@ public class FileServiceV1 implements IFileServiceV1{
 			data[i] = new FileData(files[i].getName(), files[i].isDirectory());
 		}
 		
-		return new FileListResponse(path.replace("files/", "/"), data);
+		return new FileListResponse(path.replaceAll("files/", "/").replaceAll("//", "/"), data);
 	}
 	
 	@Override
@@ -74,7 +74,7 @@ public class FileServiceV1 implements IFileServiceV1{
 				e.printStackTrace();
 			}
 	        HttpServletResponse raw = res.raw();
-	        res.header("Content-Disposition", "attachment; filename=" + filePath);
+	        res.header("Content-Disposition", "attachment; filename=" + potential.getName());
 	        res.type("application/force-download");
 	        try {
 	        	if(inputstream != null) {
